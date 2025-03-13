@@ -40,21 +40,29 @@ df_capital = df[df["CAPITAL"] == capital_selecionada].copy()
 
 # Estatísticas descritivas
 st.write("### 📌 Estatísticas Descritivas")
-st.write(df_capital["TEMP. MÉDIA MENSAL"].describe())
+stats_desc = df_capital["TEMP. MÉDIA MENSAL"].describe()
+st.write(stats_desc)
 
-# 📌 Entendendo o Problema
-st.header("📌 Entendendo o Problema")
+# 🔎 Análise Exploratória dos Resultados
+st.subheader("📊 Resumo da Análise Exploratória")
 
-st.write("A partir dos dados, podemos responder às seguintes perguntas:")
+mean_temp = stats_desc["mean"]
+median_temp = stats_desc["50%"]
+std_temp = stats_desc["std"]
+min_temp = stats_desc["min"]
+max_temp = stats_desc["max"]
 
-# Pergunta 1: Tendência de Aumento de Temperatura
-st.subheader("1️⃣ A temperatura média está aumentando ao longo dos anos?")
-st.write("""
-🔍 Para responder a essa questão, utilizamos um **gráfico de tendência** que mostra a evolução da temperatura média ao longo do tempo.
-Se a curva apresentar um crescimento constante, há evidências de aquecimento.
+st.write(f"""
+- A **temperatura média** registrada em {capital_selecionada} é de **{mean_temp:.2f}°C**.
+- A **mediana** ({median_temp:.2f}°C) é próxima da média, indicando uma distribuição relativamente simétrica.
+- O **desvio padrão** é de **{std_temp:.2f}°C**, o que sugere o grau de variação da temperatura ao longo dos anos.
+- A menor temperatura registrada foi **{min_temp:.1f}°C**, enquanto a máxima foi **{max_temp:.1f}°C**, mostrando a amplitude climática da cidade.
+- Se o desvio padrão for alto, isso significa que há grande oscilação nas temperaturas ao longo do período.
 """)
 
 # 📈 Gráfico de Tendência da Temperatura ao longo do tempo
+st.subheader("📌 Tendência da Temperatura")
+
 fig_tendencia = px.line(df_capital, x="DATA MEDIÇÃO", y="TEMP. MÉDIA MENSAL",
                         title=f"Tendência da Temperatura Média - {capital_selecionada}",
                         labels={"TEMP. MÉDIA MENSAL": "Temperatura Média (°C)", "DATA MEDIÇÃO": "Ano"},
@@ -62,35 +70,8 @@ fig_tendencia = px.line(df_capital, x="DATA MEDIÇÃO", y="TEMP. MÉDIA MENSAL",
 
 st.plotly_chart(fig_tendencia)
 
-# Pergunta 2: Variação da Temperatura
-st.subheader("2️⃣ Qual capital apresenta a maior variação de temperatura?")
-st.write("""
-🔍 Para essa análise, utilizamos medidas estatísticas como **desvio padrão** e **variância**.
-Quanto maior o desvio padrão, maior a variação da temperatura ao longo do tempo.
-""")
-
-# Estatísticas de variação (Desvio padrão e Variância)
-variability_stats = df.groupby("CAPITAL")["TEMP. MÉDIA MENSAL"].agg(["var", "std"])
-st.write(variability_stats)
-
-# Pergunta 3: Correlação entre temperatura e tempo
-st.subheader("3️⃣ Existe correlação entre o aumento da temperatura e o tempo?")
-st.write("""
-🔍 Utilizamos o **coeficiente de correlação de Pearson** para verificar a relação entre o tempo e a temperatura.
-Se o valor da correlação for positivo e próximo de 1, significa que a temperatura está aumentando com o passar dos anos.
-""")
-
-# Calcular a correlação para a capital selecionada
-correlation, p_value = stats.pearsonr(df_capital["DATA MEDIÇÃO"].dt.year, df_capital["TEMP. MÉDIA MENSAL"].dropna())
-st.write(f"**Correlação para {capital_selecionada}:** {correlation:.2f} (p-valor: {p_value:.5f})")
-
 # 📊 Histograma Interativo com Distribuição Normal
 st.subheader("📌 Distribuição das Temperaturas")
-
-st.write("""
-🔍 O histograma a seguir mostra como as temperaturas estão distribuídas ao longo dos meses. 
-Sobre ele, aplicamos uma **curva da Distribuição Normal** para entender a dispersão dos valores.
-""")
 
 mu, sigma = df_capital["TEMP. MÉDIA MENSAL"].mean(), df_capital["TEMP. MÉDIA MENSAL"].std()
 x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
@@ -105,11 +86,6 @@ st.plotly_chart(fig_hist)
 
 # 🚀 Distribuição de Poisson para eventos extremos
 st.subheader("📌 Eventos de Temperaturas Extremas")
-
-st.write("""
-🔍 Para identificar a frequência de **temperaturas extremas** (valores acima do percentil 90%), 
-utilizamos a **Distribuição de Poisson**, que modela a ocorrência desses eventos raros.
-""")
 
 threshold = df_capital["TEMP. MÉDIA MENSAL"].quantile(0.90)
 extreme_temps = df_capital[df_capital["TEMP. MÉDIA MENSAL"] > threshold]
