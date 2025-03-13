@@ -27,40 +27,57 @@ Cada linha da base de dados contém:
 A análise a seguir busca identificar tendências de aumento de temperatura e possíveis impactos climáticos.
 """)
 
-# Exibir a estrutura dos dados
-st.write("### Estrutura da Base de Dados")
-st.write(df.head())
+# 📊 Analisando os Tipos de Variáveis
+st.subheader("📊 Tipos de Variáveis na Base de Dados")
+
+st.write("""
+Nesta base de dados, temos diferentes tipos de variáveis que influenciam a análise estatística:
+
+- **DATA MEDIÇÃO** (*Qualitativa Ordinal*) → Representa um ponto no tempo e pode ser ordenada cronologicamente.
+- **CAPITAL** (*Qualitativa Nominal*) → Nome da cidade onde os dados foram coletados, sem uma hierarquia definida.
+- **TEMP. MÉDIA MENSAL** (*Quantitativa Contínua*) → Valor numérico que pode assumir qualquer temperatura dentro de um intervalo.
+""")
+
+# 📊 Exibir Tabela Completa com Filtro Interativo
+st.write("### 📊 Estrutura da Base de Dados")
+
+# Criar filtro no estilo Excel
+capital_filtrada = st.multiselect("Selecione a(s) capital(is) para visualizar:", df["CAPITAL"].unique(), default=df["CAPITAL"].unique())
+
+# Filtrar os dados conforme a seleção do usuário
+df_filtrado = df[df["CAPITAL"].isin(capital_filtrada)]
+
+# Exibir a tabela filtrada
+st.dataframe(df_filtrado, height=400, width=900)
+
+# 📌 Estatísticas Descritivas
+st.subheader("📌 Estatísticas Descritivas")
 
 # Selecionar capital para análise
-capitais = df["CAPITAL"].unique()
-capital_selecionada = st.selectbox("Selecione a capital para análise:", capitais)
+capital_selecionada = st.selectbox("Selecione uma capital para análise detalhada:", df["CAPITAL"].unique())
 
 # Filtrar dados para a capital escolhida
 df_capital = df[df["CAPITAL"] == capital_selecionada].copy()
 
-# Estatísticas descritivas
-st.write("### 📌 Estatísticas Descritivas")
+# Exibir estatísticas descritivas
 stats_desc = df_capital["TEMP. MÉDIA MENSAL"].describe()
 st.write(stats_desc)
 
-# 🔎 Análise Exploratória dos Resultados
-st.subheader("📊 Resumo da Análise Exploratória")
-
+# 🔎 Observação sobre Estatísticas Descritivas
 mean_temp = stats_desc["mean"]
-median_temp = stats_desc["50%"]
-std_temp = stats_desc["std"]
 min_temp = stats_desc["min"]
 max_temp = stats_desc["max"]
 
 st.write(f"""
-- A **temperatura média** registrada em {capital_selecionada} é de **{mean_temp:.2f}°C**.
-- A **mediana** ({median_temp:.2f}°C) é próxima da média, indicando uma distribuição relativamente simétrica.
-- O **desvio padrão** é de **{std_temp:.2f}°C**, o que sugere o grau de variação da temperatura ao longo dos anos.
-- A menor temperatura registrada foi **{min_temp:.1f}°C**, enquanto a máxima foi **{max_temp:.1f}°C**, mostrando a amplitude climática da cidade.
-- Se o desvio padrão for alto, isso significa que há grande oscilação nas temperaturas ao longo do período.
+**📌 Observação:**  
+A temperatura média registrada em **{capital_selecionada}** foi **{mean_temp:.2f}°C**.  
+Para referência, a **temperatura ideal para conforto térmico humano** é entre **20°C e 25°C**.  
+- Se a média estiver acima de **28°C**, pode indicar **ondas de calor frequentes**.  
+- Se a média estiver abaixo de **18°C**, o clima pode estar **mais frio do que o esperado**.  
+- A menor temperatura registrada foi **{min_temp:.1f}°C**, e a máxima chegou a **{max_temp:.1f}°C**, mostrando a amplitude climática.
 """)
 
-# 📈 Gráfico de Tendência da Temperatura ao longo do tempo
+# 📈 Tendência da Temperatura
 st.subheader("📌 Tendência da Temperatura")
 
 fig_tendencia = px.line(df_capital, x="DATA MEDIÇÃO", y="TEMP. MÉDIA MENSAL",
@@ -70,7 +87,14 @@ fig_tendencia = px.line(df_capital, x="DATA MEDIÇÃO", y="TEMP. MÉDIA MENSAL",
 
 st.plotly_chart(fig_tendencia)
 
-# 📊 Histograma Interativo com Distribuição Normal
+st.write("""
+**📌 Observação:**  
+Se a curva estiver **subindo**, há uma **tendência de aquecimento** na região.  
+Se a curva estiver **descendo**, pode indicar um período de **resfriamento**.  
+Padrões instáveis sugerem **grandes variações climáticas ao longo do tempo**.  
+""")
+
+# 📊 Distribuição das Temperaturas
 st.subheader("📌 Distribuição das Temperaturas")
 
 mu, sigma = df_capital["TEMP. MÉDIA MENSAL"].mean(), df_capital["TEMP. MÉDIA MENSAL"].std()
@@ -84,7 +108,13 @@ fig_hist.add_trace(go.Scatter(x=x, y=y, mode='lines', name="Distribuição Norma
 
 st.plotly_chart(fig_hist)
 
-# 🚀 Distribuição de Poisson para eventos extremos
+st.write("""
+**📌 Observação:**  
+Se houver **muitos valores acima de 25°C**, há um padrão de **temperaturas elevadas**.  
+Se a distribuição for muito dispersa, isso indica **alta variação climática**.  
+""")
+
+# 🚀 Eventos de Temperaturas Extremas
 st.subheader("📌 Eventos de Temperaturas Extremas")
 
 threshold = df_capital["TEMP. MÉDIA MENSAL"].quantile(0.90)
@@ -107,22 +137,23 @@ fig_poisson.update_layout(title="Eventos de Temperatura Extrema e Distribuição
 
 st.plotly_chart(fig_poisson)
 
-# 📌 Conclusão
+st.write(f"""
+**📌 Observação:**  
+Se houver **muitas ocorrências**, pode ser um **sinal de ondas de calor frequentes**.  
+Temperaturas muito elevadas aumentam o risco de **seca, incêndios e consumo elevado de energia**.  
+""")
+
+# 📌 Conclusão Final
 st.header("📌 Conclusão")
 
 st.write("""
 Os resultados desta análise mostram que a temperatura média nas capitais **tem uma tendência de crescimento**, evidenciada pelo coeficiente de correlação e pelo gráfico de tendência.
 
-### 📊 Justificativa dos Gráficos:
-1. **Gráfico de Tendência**: Mostra o crescimento da temperatura ao longo dos anos.
-2. **Histograma com Distribuição Normal**: Identifica como as temperaturas estão distribuídas.
-3. **Distribuição de Poisson**: Analisa eventos extremos de calor, permitindo prever sua recorrência.
-
 ### 🌍 Impacto no Meio Ambiente e na Vida:
-- **Aquecimento global**: O aumento da temperatura pode intensificar eventos climáticos extremos, como secas e ondas de calor.
-- **Saúde pública**: Altas temperaturas aumentam o risco de doenças relacionadas ao calor, como desidratação e problemas respiratórios.
-- **Infraestrutura urbana**: Cidades podem enfrentar desafios como sobrecarga no consumo de energia e maior necessidade de climatização.
+- **Aquecimento global**: Pode intensificar secas e ondas de calor.
+- **Saúde pública**: Risco maior de desidratação e problemas respiratórios.
+- **Infraestrutura urbana**: Pode levar a sobrecarga no consumo de energia.
 
-Esses dados são fundamentais para auxiliar no planejamento ambiental e em políticas públicas que visem mitigar os efeitos das mudanças climáticas. 🌱🌍
+Esses dados são fundamentais para auxiliar no planejamento ambiental e políticas públicas. 🌱🌍
 """)
 
